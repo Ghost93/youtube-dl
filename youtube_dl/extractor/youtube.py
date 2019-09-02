@@ -2,17 +2,15 @@
 
 from __future__ import unicode_literals
 
-
 import itertools
+import time
+
 import json
 import os.path
 import re
-import time
 import traceback
 
 from .common import InfoExtractor, SearchInfoExtractor
-from ..jsinterp import JSInterpreter
-from ..swfinterp import SWFInterpreter
 from ..compat import (
     compat_chr,
     compat_parse_qs,
@@ -23,6 +21,8 @@ from ..compat import (
     compat_urlparse,
     compat_str,
 )
+from ..jsinterp import JSInterpreter
+from ..swfinterp import SWFInterpreter
 from ..utils import (
     clean_html,
     encode_dict,
@@ -1206,7 +1206,9 @@ class YoutubeIE(YoutubeBaseInfoExtractor):
                             video_info = get_video_info
                         break
         if 'token' not in video_info:
-            if 'reason' in video_info:
+            if 'account_playback_token' in video_info:
+                video_info['token'] = video_info['account_playback_token']
+            elif 'reason' in video_info:
                 if 'The uploader has not made this video available in your country.' in video_info['reason']:
                     regions_allowed = self._html_search_meta('regionsAllowed', video_webpage, default=None)
                     if regions_allowed:
