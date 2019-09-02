@@ -3,24 +3,26 @@
 
 from __future__ import absolute_import, unicode_literals
 
-import collections
-import contextlib
 import datetime
 import errno
-import fileinput
-import io
 import itertools
-import json
-import locale
 import operator
-import os
-import platform
-import re
-import shutil
-import subprocess
-import socket
 import sys
 import time
+
+import collections
+import contextlib
+import fileinput
+import io
+import json
+import locale
+import os
+import platform
+import random
+import re
+import shutil
+import socket
+import subprocess
 import tokenize
 import traceback
 
@@ -811,8 +813,24 @@ class YoutubeDL(object):
             if self.params.get('playlistreverse', False):
                 entries = entries[::-1]
 
+            sleep_interval = self.params.get('sleep_interval')
+            skip_download = self.params.get('skip_download', False)
+
             for i, entry in enumerate(entries, 1):
+                if i > 1 and skip_download and sleep_interval:
+                    # no need to sleep on first page
+
+                    min_sleep_interval = sleep_interval
+                    max_sleep_interval = self.params.get('max_sleep_interval')
+                    max_sleep_interval = max_sleep_interval if max_sleep_interval else min_sleep_interval
+
+                    sleep_time = random.uniform(min_sleep_interval, max_sleep_interval)
+
+                    self.to_screen('[download] Sleeping %s seconds...' % sleep_time)
+                    time.sleep(sleep_time)
+
                 self.to_screen('[download] Downloading video %s of %s' % (i, n_entries))
+
                 extra = {
                     'n_entries': n_entries,
                     'playlist': playlist,
@@ -853,6 +871,7 @@ class YoutubeDL(object):
                     }
                 )
                 return r
+
             ie_result['entries'] = [
                 self.process_ie_result(_fixup(r), download, extra_info)
                 for r in ie_result['entries']
@@ -916,6 +935,7 @@ class YoutubeDL(object):
             if actual_value is None:
                 return m.group('none_inclusive')
             return op(actual_value, comparison_value)
+
         return _filter
 
     def build_format_selector(self, format_spec):
@@ -1034,6 +1054,7 @@ class YoutubeDL(object):
                     for f in fs:
                         for format in f(formats):
                             yield format
+
                 return selector_function
             elif selector.type == GROUP:
                 selector_function = _build_selector_function(selector.selector)
@@ -1137,6 +1158,7 @@ class YoutubeDL(object):
                         'abr': formats_info[1].get('abr'),
                         'ext': output_ext,
                     }
+
                 video_selector, audio_selector = map(_build_selector_function, selector.selector)
 
                 def selector_function(formats):
@@ -1150,6 +1172,7 @@ class YoutubeDL(object):
                 for _filter in filters:
                     formats = list(filter(_filter, formats))
                 return selector_function(formats)
+
             return final_selector
 
         stream = io.BytesIO(format_spec.encode('utf-8'))
@@ -1338,7 +1361,8 @@ class YoutubeDL(object):
 
         if download:
             if len(formats_to_download) > 1:
-                self.to_screen('[info] %s: downloading video in %s formats' % (info_dict['id'], len(formats_to_download)))
+                self.to_screen(
+                    '[info] %s: downloading video in %s formats' % (info_dict['id'], len(formats_to_download)))
             for format in formats_to_download:
                 new_info = dict(info_dict)
                 new_info.update(format)
@@ -1358,8 +1382,8 @@ class YoutubeDL(object):
                     available_subs[lang] = cap_info
 
         if (not self.params.get('writesubtitles') and not
-                self.params.get('writeautomaticsub') or not
-                available_subs):
+        self.params.get('writeautomaticsub') or not
+        available_subs):
             return None
 
         if self.params.get('allsubtitles', False):
@@ -1610,8 +1634,9 @@ class YoutubeDL(object):
                 return
             except (OSError, IOError) as err:
                 raise UnavailableVideoError(err)
-            except (ContentTooShortError, ) as err:
-                self.report_error('content too short (expected %s bytes and served %s)' % (err.expected, err.downloaded))
+            except (ContentTooShortError,) as err:
+                self.report_error(
+                    'content too short (expected %s bytes and served %s)' % (err.expected, err.downloaded))
                 return
 
             if success:
@@ -1875,7 +1900,7 @@ class YoutubeDL(object):
         self.to_screen(render_table(
             ['Language', 'formats'],
             [[lang, ', '.join(f['ext'] for f in reversed(formats))]
-                for lang, formats in subtitles.items()]))
+             for lang, formats in subtitles.items()]))
 
     def urlopen(self, req):
         """ Start an HTTP download """
@@ -1895,11 +1920,11 @@ class YoutubeDL(object):
         stdout_encoding = getattr(
             sys.stdout, 'encoding', 'missing (%s)' % type(sys.stdout).__name__)
         encoding_str = (
-            '[debug] Encodings: locale %s, fs %s, out %s, pref %s\n' % (
-                locale.getpreferredencoding(),
-                sys.getfilesystemencoding(),
-                stdout_encoding,
-                self.get_encoding()))
+                '[debug] Encodings: locale %s, fs %s, out %s, pref %s\n' % (
+            locale.getpreferredencoding(),
+            sys.getfilesystemencoding(),
+            stdout_encoding,
+            self.get_encoding()))
         write_string(encoding_str, encoding=None)
 
         self._write_string('[debug] youtube-dl version ' + __version__ + '\n')
