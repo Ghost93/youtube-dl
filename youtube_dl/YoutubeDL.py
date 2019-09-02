@@ -3,31 +3,32 @@
 
 from __future__ import absolute_import, unicode_literals
 
+import datetime
+import errno
+import itertools
+import operator
+import sys
+import time
+
 import collections
 import contextlib
 import copy
-import datetime
-import errno
 import fileinput
 import io
-import itertools
 import json
 import locale
-import operator
 import os
 import platform
+import random
 import re
 import shutil
-import subprocess
 import socket
-import sys
-import time
+import subprocess
 import tokenize
 import traceback
-import random
-
 from string import ascii_letters
 
+from .cache import Cache
 from .compat import (
     compat_basestring,
     compat_cookiejar,
@@ -41,6 +42,18 @@ from .compat import (
     compat_urllib_error,
     compat_urllib_request,
     compat_urllib_request_DataHandler,
+)
+from .downloader import get_suitable_downloader
+from .downloader.rtmp import rtmpdump_version
+from .extractor import get_info_extractor, gen_extractor_classes, _LAZY_LOADER
+from .extractor.openload import PhantomJSwrapper
+from .postprocessor import (
+    FFmpegFixupM3u8PP,
+    FFmpegFixupM4aPP,
+    FFmpegFixupStretchedPP,
+    FFmpegMergerPP,
+    FFmpegPostProcessor,
+    get_postprocessor,
 )
 from .utils import (
     age_restricted,
@@ -92,19 +105,6 @@ from .utils import (
     YoutubeDLCookieJar,
     YoutubeDLCookieProcessor,
     YoutubeDLHandler,
-)
-from .cache import Cache
-from .extractor import get_info_extractor, gen_extractor_classes, _LAZY_LOADER
-from .extractor.openload import PhantomJSwrapper
-from .downloader import get_suitable_downloader
-from .downloader.rtmp import rtmpdump_version
-from .postprocessor import (
-    FFmpegFixupM3u8PP,
-    FFmpegFixupM4aPP,
-    FFmpegFixupStretchedPP,
-    FFmpegMergerPP,
-    FFmpegPostProcessor,
-    get_postprocessor,
 )
 from .version import __version__
 
@@ -974,9 +974,23 @@ class YoutubeDL(object):
             if self.params.get('playlistrandom', False):
                 random.shuffle(entries)
 
+            sleep_interval = self.params.get('sleep_interval')
+            skip_download = self.params.get('skip_download', False)
             x_forwarded_for = ie_result.get('__x_forwarded_for_ip')
 
             for i, entry in enumerate(entries, 1):
+                if i > 1 and skip_download and sleep_interval:
+                    # no need to sleep on first page
+
+                    min_sleep_interval = sleep_interval
+                    max_sleep_interval = self.params.get('max_sleep_interval')
+                    max_sleep_interval = max_sleep_interval if max_sleep_interval else min_sleep_interval
+
+                    sleep_time = random.uniform(min_sleep_interval, max_sleep_interval)
+
+                    self.to_screen('[download] Sleeping %s seconds...' % sleep_time)
+                    time.sleep(sleep_time)
+
                 self.to_screen('[download] Downloading video %s of %s' % (i, n_entries))
                 # This __x_forwarded_for_ip thing is a bit ugly but requires
                 # minimal changes
@@ -1024,6 +1038,7 @@ class YoutubeDL(object):
                     }
                 )
                 return r
+
             ie_result['entries'] = [
                 self.process_ie_result(_fixup(r), download, extra_info)
                 for r in ie_result['entries']
@@ -1093,6 +1108,7 @@ class YoutubeDL(object):
             if actual_value is None:
                 return m.group('none_inclusive')
             return op(actual_value, comparison_value)
+
         return _filter
 
     def _default_format_spec(self, info_dict, download=True):
@@ -1235,6 +1251,7 @@ class YoutubeDL(object):
                     for f in fs:
                         for format in f(ctx):
                             yield format
+
                 return selector_function
             elif selector.type == GROUP:
                 selector_function = _build_selector_function(selector.selector)
