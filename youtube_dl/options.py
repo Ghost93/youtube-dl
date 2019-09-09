@@ -1,11 +1,10 @@
 from __future__ import unicode_literals
 
-import os.path
 import optparse
+import os.path
 import re
 import sys
 
-from .downloader.external import list_external_downloaders
 from .compat import (
     compat_expanduser,
     compat_get_terminal_size,
@@ -13,6 +12,7 @@ from .compat import (
     compat_kwargs,
     compat_shlex_split,
 )
+from .downloader.external import list_external_downloaders
 from .utils import (
     preferredencoding,
     write_string,
@@ -271,6 +271,10 @@ def parseOpts(overrideArguments=None):
         '--match-title',
         dest='matchtitle', metavar='REGEX',
         help='Download only matching titles (regex or caseless sub-string)')
+    selection.add_option(
+        '--stopatfirst',
+        action='store_true', dest='stopatfirst', default=False,
+        help='Stop downloading of further videos when the first video is not in daterange')
     selection.add_option(
         '--reject-title',
         dest='rejecttitle', metavar='REGEX',
