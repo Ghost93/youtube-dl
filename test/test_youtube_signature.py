@@ -6,6 +6,7 @@ from __future__ import unicode_literals
 import os
 import sys
 import unittest
+
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import io
@@ -113,6 +114,7 @@ def make_tfunc(url, stype, sig_input, expected_sig):
 
     test_func.__name__ = str('test_signature_' + stype + '_' + test_id)
     setattr(TestSignature, test_func.__name__, test_func)
+
 
 for test_spec in _TESTS:
     make_tfunc(*test_spec)

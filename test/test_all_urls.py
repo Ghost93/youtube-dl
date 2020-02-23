@@ -2,10 +2,12 @@
 
 from __future__ import unicode_literals
 
+import collections
 # Allow direct execution
 import os
 import sys
 import unittest
+
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 
@@ -56,7 +58,7 @@ class TestAllURLsMatching(unittest.TestCase):
         assertChannel('https://www.youtube.com/channel/HCtnHdj3df7iM/videos')
 
     def test_youtube_user_matching(self):
-        self.assertMatch('www.youtube.com/NASAgovVideo/videos', ['youtube:user'])
+        self.assertMatch('http://www.youtube.com/NASAgovVideo/videos', ['youtube:user'])
 
     def test_youtube_feeds(self):
         self.assertMatch('https://www.youtube.com/feed/watch_later', ['youtube:watchlater'])
@@ -100,8 +102,6 @@ class TestAllURLsMatching(unittest.TestCase):
         self.assertMatch(':ytsubs', ['youtube:subscriptions'])
         self.assertMatch(':ytsubscriptions', ['youtube:subscriptions'])
         self.assertMatch(':ythistory', ['youtube:history'])
-        self.assertMatch(':thedailyshow', ['ComedyCentralShows'])
-        self.assertMatch(':tds', ['ComedyCentralShows'])
 
     def test_vimeo_matching(self):
         self.assertMatch('https://vimeo.com/channels/tributes', ['vimeo:channel'])
@@ -111,7 +111,7 @@ class TestAllURLsMatching(unittest.TestCase):
         self.assertMatch('https://vimeo.com/user7108434/videos', ['vimeo:user'])
         self.assertMatch('https://vimeo.com/user21297594/review/75524534/3c257a1b5d', ['vimeo:review'])
 
-    # https://github.com/rg3/youtube-dl/issues/1930
+    # https://github.com/ytdl-org/youtube-dl/issues/1930
     def test_soundcloud_not_matching_sets(self):
         self.assertMatch('http://soundcloud.com/floex/sets/gone-ep', ['soundcloud:set'])
 
@@ -120,15 +120,18 @@ class TestAllURLsMatching(unittest.TestCase):
         self.assertMatch('http://tatianamaslanydaily.tumblr.com/post/54196191430', ['Tumblr'])
 
     def test_pbs(self):
-        # https://github.com/rg3/youtube-dl/issues/2350
+        # https://github.com/ytdl-org/youtube-dl/issues/2350
         self.assertMatch('http://video.pbs.org/viralplayer/2365173446/', ['pbs'])
         self.assertMatch('http://video.pbs.org/widget/partnerplayer/980042464/', ['pbs'])
 
-    def test_yahoo_https(self):
-        # https://github.com/rg3/youtube-dl/issues/2701
-        self.assertMatch(
-            'https://screen.yahoo.com/smartwatches-latest-wearable-gadgets-163745379-cbs.html',
-            ['Yahoo'])
+    def test_no_duplicated_ie_names(self):
+        name_accu = collections.defaultdict(list)
+        for ie in self.ies:
+            name_accu[ie.IE_NAME.lower()].append(type(ie).__name__)
+        for (ie_name, ie_list) in name_accu.items():
+            self.assertEqual(
+                len(ie_list), 1,
+                'Multiple extractors with the same IE_NAME "%s" (%s)' % (ie_name, ', '.join(ie_list)))
 
 
 if __name__ == '__main__':

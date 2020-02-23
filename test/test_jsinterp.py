@@ -6,6 +6,7 @@ from __future__ import unicode_literals
 import os
 import sys
 import unittest
+
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from youtube_dl.jsinterp import JSInterpreter
@@ -103,6 +104,14 @@ class TestJSInterpreter(unittest.TestCase):
             return a;
         }''')
         self.assertEqual(jsi.call_function('x'), [20, 20, 30, 40, 50])
+
+    def test_call(self):
+        jsi = JSInterpreter('''
+        function x() { return 2; }
+        function y(a) { return x() + a; }
+        function z() { return y(3); }
+        ''')
+        self.assertEqual(jsi.call_function('z'), 5)
 
 
 if __name__ == '__main__':

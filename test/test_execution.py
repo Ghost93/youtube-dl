@@ -3,11 +3,11 @@
 
 from __future__ import unicode_literals
 
-import unittest
-
-import sys
 import os
 import subprocess
+import sys
+import unittest
+
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from youtube_dl.utils import encodeArgument
@@ -38,6 +38,7 @@ class TestExecution(unittest.TestCase):
             cwd=rootDir, stdout=_DEV_NULL, stderr=subprocess.PIPE)
         _, stderr = p.communicate()
         self.assertFalse(stderr)
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -1,89 +1,93 @@
+# coding: utf-8
 from __future__ import unicode_literals
 
 from .common import InfoExtractor
-from ..compat import (
-    compat_urllib_parse,
-    compat_urlparse,
-)
 from ..utils import (
-    encode_dict,
-    get_element_by_attribute,
     int_or_none,
+    parse_iso8601,
+    smuggle_url,
 )
 
 
 class MiTeleIE(InfoExtractor):
     IE_DESC = 'mitele.es'
-    _VALID_URL = r'http://www\.mitele\.es/[^/]+/[^/]+/[^/]+/(?P<id>[^/]+)/'
+    _VALID_URL = r'https?://(?:www\.)?mitele\.es/(?:[^/]+/)+(?P<id>[^/]+)/player'
 
     _TESTS = [{
-        'url': 'http://www.mitele.es/programas-tv/diario-de/la-redaccion/programa-144/',
-        'md5': '0ff1a13aebb35d9bc14081ff633dd324',
+        'url': 'http://www.mitele.es/programas-tv/diario-de/57b0dfb9c715da65618b4afa/player',
         'info_dict': {
-            'id': '0NF1jJnxS1Wu3pHrmvFyw2',
-            'display_id': 'programa-144',
-            'ext': 'flv',
-            'title': 'Tor, la web invisible',
-            'description': 'md5:3b6fce7eaa41b2d97358726378d9369f',
-            'thumbnail': 're:(?i)^https?://.*\.jpg$',
+            'id': 'FhYW1iNTE6J6H7NkQRIEzfne6t2quqPg',
+            'ext': 'mp4',
+            'title': 'Diario de La redacción Programa 144',
+            'description': 'md5:07c35a7b11abb05876a6a79185b58d27',
+            'series': 'Diario de',
+            'season': 'Season 14',
+            'season_number': 14,
+            'episode': 'Tor, la web invisible',
+            'episode_number': 3,
+            'thumbnail': r're:(?i)^https?://.*\.jpg$',
             'duration': 2913,
+            'age_limit': 16,
+            'timestamp': 1471209401,
+            'upload_date': '20160814',
         },
+        'add_ie': ['Ooyala'],
+    }, {
+        # no explicit title
+        'url': 'http://www.mitele.es/programas-tv/cuarto-milenio/57b0de3dc915da14058b4876/player',
+        'info_dict': {
+            'id': 'oyNG1iNTE6TAPP-JmCjbwfwJqqMMX3Vq',
+            'ext': 'mp4',
+            'title': 'Cuarto Milenio Temporada 6 Programa 226',
+            'description': 'md5:5ff132013f0cd968ffbf1f5f3538a65f',
+            'series': 'Cuarto Milenio',
+            'season': 'Season 6',
+            'season_number': 6,
+            'episode': 'Episode 24',
+            'episode_number': 24,
+            'thumbnail': r're:(?i)^https?://.*\.jpg$',
+            'duration': 7313,
+            'age_limit': 12,
+            'timestamp': 1471209021,
+            'upload_date': '20160814',
+        },
+        'params': {
+            'skip_download': True,
+        },
+        'add_ie': ['Ooyala'],
+    }, {
+        'url': 'http://www.mitele.es/series-online/la-que-se-avecina/57aac5c1c915da951a8b45ed/player',
+        'only_matching': True,
+    }, {
+        'url': 'https://www.mitele.es/programas-tv/diario-de/la-redaccion/programa-144-40_1006364575251/player/',
+        'only_matching': True,
     }]
 
     def _real_extract(self, url):
         display_id = self._match_id(url)
-
         webpage = self._download_webpage(url, display_id)
-
-        config_url = self._search_regex(
-            r'data-config\s*=\s*"([^"]+)"', webpage, 'data config url')
-        config_url = compat_urlparse.urljoin(url, config_url)
-
-        config = self._download_json(
-            config_url, display_id, 'Downloading config JSON')
-
-        mmc = self._download_json(
-            config['services']['mmc'], display_id, 'Downloading mmc JSON')
-
-        formats = []
-        for location in mmc['locations']:
-            gat = self._proto_relative_url(location.get('gat'), 'http:')
-            bas = location.get('bas')
-            loc = location.get('loc')
-            ogn = location.get('ogn')
-            if None in (gat, bas, loc, ogn):
-                continue
-            token_data = {
-                'bas': bas,
-                'icd': loc,
-                'ogn': ogn,
-                'sta': '0',
-            }
-            media = self._download_json(
-                '%s/?%s' % (gat, compat_urllib_parse.urlencode(encode_dict(token_data))),
-                display_id, 'Downloading %s JSON' % location['loc'])
-            file_ = media.get('file')
-            if not file_:
-                continue
-            formats.extend(self._extract_f4m_formats(
-                file_ + '&hdcore=3.2.0&plugin=aasp-3.2.0.77.18',
-                display_id, f4m_id=loc))
-
-        title = self._search_regex(
-            r'class="Destacado-text"[^>]*>\s*<strong>([^<]+)</strong>', webpage, 'title')
-
-        video_id = self._search_regex(
-            r'data-media-id\s*=\s*"([^"]+)"', webpage,
-            'data media id', default=None) or display_id
-        thumbnail = config.get('poster', {}).get('imageUrl')
-        duration = int_or_none(mmc.get('duration'))
+        pre_player = self._parse_json(self._search_regex(
+            r'window\.\$REACTBASE_STATE\.prePlayer_mtweb\s*=\s*({.+})',
+            webpage, 'Pre Player'), display_id)['prePlayer']
+        title = pre_player['title']
+        video = pre_player['video']
+        video_id = video['dataMediaId']
+        content = pre_player.get('content') or {}
+        info = content.get('info') or {}
 
         return {
+            '_type': 'url_transparent',
+            # for some reason only HLS is supported
+            'url': smuggle_url('ooyala:' + video_id, {'supportedformats': 'm3u8,dash'}),
             'id': video_id,
-            'display_id': display_id,
             'title': title,
-            'description': get_element_by_attribute('class', 'text', webpage),
-            'thumbnail': thumbnail,
-            'duration': duration,
-            'formats': formats,
+            'description': info.get('synopsis'),
+            'series': content.get('title'),
+            'season_number': int_or_none(info.get('season_number')),
+            'episode': content.get('subtitle'),
+            'episode_number': int_or_none(info.get('episode_number')),
+            'duration': int_or_none(info.get('duration')),
+            'thumbnail': video.get('dataPoster'),
+            'age_limit': int_or_none(info.get('rating')),
+            'timestamp': parse_iso8601(pre_player.get('publishedTime')),
         }

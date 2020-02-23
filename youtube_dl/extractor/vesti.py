@@ -1,16 +1,16 @@
-# encoding: utf-8
+# coding: utf-8
 from __future__ import unicode_literals
 
 import re
 
 from .common import InfoExtractor
-from ..utils import ExtractorError
 from .rutv import RUTVIE
+from ..utils import ExtractorError
 
 
 class VestiIE(InfoExtractor):
     IE_DESC = 'Вести.Ru'
-    _VALID_URL = r'http://(?:.+?\.)?vesti\.ru/(?P<id>.+)'
+    _VALID_URL = r'https?://(?:.+?\.)?vesti\.ru/(?P<id>.+)'
 
     _TESTS = [
         {

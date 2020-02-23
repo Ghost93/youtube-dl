@@ -2,8 +2,8 @@
 from __future__ import unicode_literals
 
 import os
-from os.path import dirname as dirn
 import sys
+from os.path import dirname as dirn
 
 sys.path.insert(0, dirn(dirn((os.path.abspath(__file__)))))
 import youtube_dl
@@ -24,6 +24,7 @@ def build_completion(opt_parser):
         # just using the special char
         filled_template = template.replace("{{flags}}", " ".join(opts_flag))
         f.write(filled_template)
+
 
 parser = youtube_dl.parseOpts()[0]
 build_completion(parser)

@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+# coding: utf-8
 #
 # youtube-dl documentation build configuration file, created by
 # sphinx-quickstart on Fri Mar 14 21:05:43 2014.
@@ -12,8 +12,9 @@
 # All configuration values have a default; values that are commented out
 # serve to show the default.
 
-import sys
 import os
+import sys
+
 # Allows to import youtube_dl
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 

@@ -6,7 +6,6 @@ import optparse
 import os
 import sys
 
-
 # Import youtube_dl
 ROOT_DIR = os.path.join(os.path.dirname(__file__), '..')
 sys.path.insert(0, ROOT_DIR)
@@ -40,6 +39,7 @@ def main():
 
     with io.open(outfile, 'w', encoding='utf-8') as outf:
         outf.write(out)
+
 
 if __name__ == '__main__':
     main()

@@ -1,18 +1,17 @@
 from __future__ import unicode_literals
 
-import base64
-
 from .common import InfoExtractor
-from ..compat import compat_urllib_parse
+from ..compat import compat_b64decode
 from ..utils import (
     ExtractorError,
     HEADRequest,
     sanitized_Request,
+    urlencode_postdata,
 )
 
 
 class HotNewHipHopIE(InfoExtractor):
-    _VALID_URL = r'http://www\.hotnewhiphop\.com/.*\.(?P<id>.*)\.html'
+    _VALID_URL = r'https?://(?:www\.)?hotnewhiphop\.com/.*\.(?P<id>.*)\.html'
     _TEST = {
         'url': 'http://www.hotnewhiphop.com/freddie-gibbs-lay-it-down-song.1435540.html',
         'md5': '2c2cd2f76ef11a9b3b581e8b232f3d96',
@@ -35,7 +34,7 @@ class HotNewHipHopIE(InfoExtractor):
                 r'"contentUrl" content="(.*?)"', webpage, 'content URL')
             return self.url_result(video_url, ie='Youtube')
 
-        reqdata = compat_urllib_parse.urlencode([
+        reqdata = urlencode_postdata([
             ('mediaType', 's'),
             ('mediaId', video_id),
         ])
@@ -48,7 +47,7 @@ class HotNewHipHopIE(InfoExtractor):
         if 'mediaKey' not in mkd:
             raise ExtractorError('Did not get a media key')
 
-        redirect_url = base64.b64decode(video_url_base64).decode('utf-8')
+        redirect_url = compat_b64decode(video_url_base64).decode('utf-8')
         redirect_req = HEADRequest(redirect_url)
         req = self._request_webpage(
             redirect_req, video_id,

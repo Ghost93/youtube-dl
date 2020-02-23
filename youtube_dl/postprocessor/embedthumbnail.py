@@ -1,12 +1,10 @@
-# -*- coding: utf-8 -*-
+# coding: utf-8
 from __future__ import unicode_literals
-
 
 import os
 import subprocess
 
 from .ffmpeg import FFmpegPostProcessor
-
 from ..utils import (
     check_executable,
     encodeArgument,
@@ -31,7 +29,8 @@ class EmbedThumbnailPP(FFmpegPostProcessor):
         temp_filename = prepend_extension(filename, 'temp')
 
         if not info.get('thumbnails'):
-            raise EmbedThumbnailPPError('Thumbnail was not found. Nothing to do.')
+            self._downloader.to_screen('[embedthumbnail] There aren\'t any thumbnails to embed')
+            return [], info
 
         thumbnail_filename = info['thumbnails'][-1]['filename']
 

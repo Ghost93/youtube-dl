@@ -2,8 +2,8 @@
 from __future__ import unicode_literals
 
 import os
-from os.path import dirname as dirn
 import sys
+from os.path import dirname as dirn
 
 sys.path.insert(0, dirn(dirn((os.path.abspath(__file__)))))
 import youtube_dl
@@ -43,6 +43,7 @@ def build_completion(opt_parser):
 
     with open(ZSH_COMPLETION_FILE, "w") as f:
         f.write(template)
+
 
 parser = youtube_dl.parseOpts()[0]
 build_completion(parser)

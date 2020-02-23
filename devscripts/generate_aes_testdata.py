@@ -1,10 +1,10 @@
 from __future__ import unicode_literals
 
 import codecs
-import subprocess
-
 import os
+import subprocess
 import sys
+
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from youtube_dl.utils import intlist_to_bytes
@@ -22,6 +22,7 @@ def openssl_encode(algo, key, iv):
     prog = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
     out, _ = prog.communicate(secret_msg)
     return out
+
 
 iv = key = [0x20, 0x15] + 14 * [0]
 

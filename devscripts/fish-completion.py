@@ -3,8 +3,8 @@ from __future__ import unicode_literals
 
 import optparse
 import os
-from os.path import dirname as dirn
 import sys
+from os.path import dirname as dirn
 
 sys.path.insert(0, dirn(dirn((os.path.abspath(__file__)))))
 import youtube_dl
@@ -43,6 +43,7 @@ def build_completion(opt_parser):
     filled_template = template.replace('{{commands}}', '\n'.join(commands))
     with open(FISH_COMPLETION_FILE, 'w') as f:
         f.write(filled_template)
+
 
 parser = youtube_dl.parseOpts()[0]
 build_completion(parser)
