@@ -28,7 +28,6 @@ from ..swfinterp import SWFInterpreter
 from ..utils import (
     bool_or_none,
     clean_html,
-    dict_get,
     error_to_compat_str,
     extract_attributes,
     ExtractorError,
