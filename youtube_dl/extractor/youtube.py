@@ -2,6 +2,7 @@
 
 from __future__ import unicode_literals
 
+
 import itertools
 import json
 import os.path
@@ -11,6 +12,8 @@ import time
 import traceback
 
 from .common import InfoExtractor, SearchInfoExtractor
+from ..jsinterp import JSInterpreter
+from ..swfinterp import SWFInterpreter
 from ..compat import (
     compat_chr,
     compat_HTTPError,
