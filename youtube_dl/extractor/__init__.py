@@ -1,5 +1,7 @@
 from __future__ import unicode_literals
 
+from youtube_dl.extractor.generic import GenericIE
+
 try:
     from .lazy_extractors import *
     from .lazy_extractors import _ALL_CLASSES

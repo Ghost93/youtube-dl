@@ -8,6 +8,8 @@ import os
 import sys
 import unittest
 
+from youtube_dl.extractor.youtube import YoutubeIE
+
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import copy
@@ -15,7 +17,6 @@ import copy
 from test.helper import FakeYDL, assertRegexpMatches
 from youtube_dl import YoutubeDL
 from youtube_dl.compat import compat_str, compat_urllib_error
-from youtube_dl.extractor import YoutubeIE
 from youtube_dl.extractor.common import InfoExtractor
 from youtube_dl.postprocessor.common import PostProcessor
 from youtube_dl.utils import ExtractorError, match_filter_func
