@@ -16,18 +16,18 @@ import locale
 import operator
 import os
 import platform
+import random
 import re
 import shutil
-import subprocess
 import socket
+import subprocess
 import sys
 import time
 import tokenize
 import traceback
-import random
-
 from string import ascii_letters
 
+from .cache import Cache
 from .compat import (
     compat_basestring,
     compat_cookiejar,
@@ -41,6 +41,18 @@ from .compat import (
     compat_urllib_error,
     compat_urllib_request,
     compat_urllib_request_DataHandler,
+)
+from .downloader import get_suitable_downloader
+from .downloader.rtmp import rtmpdump_version
+from .extractor import get_info_extractor, gen_extractor_classes, _LAZY_LOADER
+from .extractor.openload import PhantomJSwrapper
+from .postprocessor import (
+    FFmpegFixupM3u8PP,
+    FFmpegFixupM4aPP,
+    FFmpegFixupStretchedPP,
+    FFmpegMergerPP,
+    FFmpegPostProcessor,
+    get_postprocessor,
 )
 from .utils import (
     age_restricted,
@@ -93,19 +105,6 @@ from .utils import (
     YoutubeDLCookieProcessor,
     YoutubeDLHandler,
     YoutubeDLRedirectHandler,
-)
-from .cache import Cache
-from .extractor import get_info_extractor, gen_extractor_classes, _LAZY_LOADER
-from .extractor.openload import PhantomJSwrapper
-from .downloader import get_suitable_downloader
-from .downloader.rtmp import rtmpdump_version
-from .postprocessor import (
-    FFmpegFixupM3u8PP,
-    FFmpegFixupM4aPP,
-    FFmpegFixupStretchedPP,
-    FFmpegMergerPP,
-    FFmpegPostProcessor,
-    get_postprocessor,
 )
 from .version import __version__
 
@@ -977,6 +976,8 @@ class YoutubeDL(object):
                 random.shuffle(entries)
 
             x_forwarded_for = ie_result.get('__x_forwarded_for_ip')
+            sleep_interval = self.params.get('sleep_interval')
+            skip_download = self.params.get('skip_download', False)
 
             for i, entry in enumerate(entries, 1):
                 self.to_screen('[download] Downloading video %s of %s' % (i, n_entries))
@@ -984,6 +985,19 @@ class YoutubeDL(object):
                 # minimal changes
                 if x_forwarded_for:
                     entry['__x_forwarded_for_ip'] = x_forwarded_for
+
+                if i > 1 and skip_download and sleep_interval:
+                    # no need to sleep on first page
+
+                    min_sleep_interval = sleep_interval
+                    max_sleep_interval = self.params.get('max_sleep_interval')
+                    max_sleep_interval = max_sleep_interval if max_sleep_interval else min_sleep_interval
+
+                    sleep_time = random.uniform(min_sleep_interval, max_sleep_interval)
+
+                    self.to_screen('[download] Sleeping %s seconds...' % sleep_time)
+                    time.sleep(sleep_time)
+
                 extra = {
                     'n_entries': n_entries,
                     'playlist': playlist,
