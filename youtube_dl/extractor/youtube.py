@@ -2,7 +2,6 @@
 
 from __future__ import unicode_literals
 
-
 import itertools
 import json
 import os.path
@@ -12,8 +11,6 @@ import time
 import traceback
 
 from .common import InfoExtractor, SearchInfoExtractor
-from ..jsinterp import JSInterpreter
-from ..swfinterp import SWFInterpreter
 from ..compat import (
     compat_chr,
     compat_HTTPError,
@@ -26,6 +23,8 @@ from ..compat import (
     compat_urlparse,
     compat_str,
 )
+from ..jsinterp import JSInterpreter
+from ..swfinterp import SWFInterpreter
 from ..utils import (
     bool_or_none,
     clean_html,
@@ -2373,8 +2372,9 @@ class YoutubeIE(YoutubeBaseInfoExtractor):
             video_tags = try_get(video_details, lambda x: x['keywords'], list)
 
         def _extract_count(count_name):
+            # Patch from https://github.com/ytdl-org/youtube-dl/issues/25977#issuecomment-657224129
             return str_to_int(self._search_regex(
-                r'-%s-button[^>]+><span[^>]+class="yt-uix-button-content"[^>]*>([\d,]+)</span>'
+                r'([0-9,]+) %ss"}}'  # this line fixed
                 % re.escape(count_name),
                 video_webpage, count_name, default=None))
 
